@@ -148,4 +148,4 @@ npx git-guard check --max-size 15
 
 ## 📄 License
 
-MIT © [Ryan Ngatia](https://github.com/Thashiznitt)
+MIT © [ThaShiznitt](https://github.com/Thashiznitt)
