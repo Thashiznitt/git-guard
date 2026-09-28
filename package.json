@@ -1,46 +1,38 @@
 {
-  "name": "git-guard",
-  "version": "1.0.0",
-  "description": "Universal Git Safety & Build Cache Cleaner: 10MB commit size guard, multi-framework cache cleaner, and human-readable descriptive conventional commit generator.",
-  "main": "./bin/cli.js",
+  "name": "@thashiznitt/git-guard",
+  "version": "1.1.0",
+  "description": "Universal Git Safety Guard, Duplicate node_modules Deduplicator, Universal Build Cache Cleaner & Detailed Conventional Commit Tool",
+  "main": "lib/commit.js",
   "bin": {
-    "git-guard": "./bin/cli.js"
+    "git-guard": "bin/cli.js"
   },
   "scripts": {
-    "postinstall": "node ./bin/install.js",
-    "test": "node ./bin/cli.js --help"
+    "test": "node bin/cli.js --help",
+    "postinstall": "node bin/install.js"
   },
   "keywords": [
     "git",
-    "pre-commit",
-    "git-hooks",
-    "cleaner",
-    "cache-cleaner",
-    "commit-generator",
-    "husky",
-    "dev-tools",
+    "git-guard",
+    "conventional-commits",
     "monorepo",
-    "nextjs",
-    "react-native",
-    "vite"
+    "dedupe",
+    "node_modules",
+    "cache-cleaner",
+    "fsmonitor",
+    "pre-commit",
+    "git-safety"
   ],
   "author": "ThaShiznitt",
   "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Thashiznitt/git-guard.git"
+    "url": "git+https://github.com/Thashiznitt/git-guard.git"
   },
   "bugs": {
     "url": "https://github.com/Thashiznitt/git-guard/issues"
   },
-  "homepage": "https://github.com/Thashiznitt/git-guard#readme",
-  "files": [
-    "bin",
-    "lib",
-    "README.md",
-    "LICENSE"
-  ],
-  "engines": {
-    "node": ">=16"
-  }
+  "homepage": "https://github.com/Thashiznitt/git-guard#readme"
 }

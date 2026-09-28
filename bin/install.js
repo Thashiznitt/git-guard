@@ -3,7 +3,8 @@
  * @thashiznitt/git-guard Automatic Hook & Configuration Installer
  *
  * Runs automatically on `npm install` (postinstall) or manually via `npx git-guard init`.
- * Sets up 10MB commit size guard, npm helper scripts, and git performance flags.
+ * Sets up 10MB commit size guard, monorepo node_modules deduplication, npm scripts,
+ * and git performance flags.
  */
 
 const fs = require("fs");
@@ -43,13 +44,17 @@ function main() {
     return;
   }
 
-  // 1. Install Pre-Commit Size Guard Hook
+  // 1. Install Pre-Commit Size Guard & Node Modules Deduplication Hook
   const guardCode = `# -----------------------------------------------------------------------------
-# GUARD: Block files > 10MB from being committed into Git history.
-# Installed by git-guard (keeps repo lean & ensures zero data loss)
+# GUARD: Block files > 10MB & prevent duplicate node_modules
+# Installed by @thashiznitt/git-guard
 # -----------------------------------------------------------------------------
 MAX_SIZE_KB=10240
 
+# 1. Clean any duplicate nested node_modules in subfolders (apps/*/node_modules, packages/*/node_modules)
+find apps packages -maxdepth 3 -name node_modules -type d -prune -exec rm -rf {} + 2>/dev/null || true
+
+# 2. Block staged files > 10MB from entering Git history
 git diff --cached --name-only --diff-filter=ACM | while IFS= read -r file; do
   if [ -f "$file" ]; then
     size=$(wc -c < "$file" | tr -d ' ')
@@ -87,13 +92,25 @@ done || exit 1
     if (!existing.includes("Size Guard") && !existing.includes("MAX_SIZE_KB=10240")) {
       const updated = guardCode + "\n" + existing;
       fs.writeFileSync(targetHook, updated, { mode: 0o755 });
-      console.log(`  ✅ Installed 10MB Size Guard in: ${path.relative(root, targetHook)}`);
+      console.log(`  ✅ Installed 10MB Size Guard & Dedupe in: ${path.relative(root, targetHook)}`);
     } else {
       console.log(`  ✓ 10MB Size Guard already active in: ${path.relative(root, targetHook)}`);
     }
   }
 
-  // 2. Add npm scripts to host package.json if not present
+  // 2. Configure .npmrc for Hoisting (prevents duplicate child node_modules during npm install)
+  const npmrcPath = path.join(root, ".npmrc");
+  let npmrcContent = "";
+  if (fs.existsSync(npmrcPath)) {
+    npmrcContent = fs.readFileSync(npmrcPath, "utf8");
+  }
+  if (!npmrcContent.includes("install-strategy=hoisted")) {
+    npmrcContent += (npmrcContent.endsWith("\n") || npmrcContent === "" ? "" : "\n") + "install-strategy=hoisted\n";
+    fs.writeFileSync(npmrcPath, npmrcContent, "utf8");
+    console.log(`  ✅ Configured 'install-strategy=hoisted' in .npmrc`);
+  }
+
+  // 3. Add npm scripts to host package.json
   const pkgPath = path.join(root, "package.json");
   if (fs.existsSync(pkgPath)) {
     try {
@@ -109,21 +126,25 @@ done || exit 1
         pkg.scripts["clean:recordings"] = "git-guard clean";
         updated = true;
       }
+      if (!pkg.scripts["dedupe:modules"]) {
+        pkg.scripts["dedupe:modules"] = "git-guard dedupe";
+        updated = true;
+      }
 
       if (updated) {
         fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf8");
-        console.log(`  ✅ Added 'commit' and 'clean:recordings' scripts to package.json`);
+        console.log(`  ✅ Added 'commit', 'dedupe:modules', and 'clean:recordings' scripts to package.json`);
       }
     } catch {}
   }
 
-  // 3. Enable Git performance features locally
+  // 4. Enable Git performance features locally
   run("git config core.fsmonitor true", root);
   run("git config core.untrackedCache true", root);
   run("git config core.preloadindex true", root);
-  console.log("  ✅ Enabled Git native fsmonitor & untrackedCache");
+  console.log(`  ✅ Optimized local Git speed (fsmonitor, untrackedCache, preloadindex enabled)`);
 
-  console.log("🎉 [Git Guard] Project ready! Run 'npm run commit' for safe, descriptive commits.\n");
+  console.log(`\n🛡️  Git Guard is ready!\n`);
 }
 
 main();

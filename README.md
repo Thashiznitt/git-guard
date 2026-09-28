@@ -1,148 +1,92 @@
-# git-guard 🛡️
+# 🛡️ @thashiznitt/git-guard
 
-> **Universal Git Safety & Build Cache Cleaner**  
-> Prevents bloated commits (>10MB), sweeps away temporary AI recordings & heavy build caches across all frameworks, and generates structured, descriptive conventional commits.
+**Universal Git Safety, Monorepo Node Modules Deduplicator, Build Cache Cleaner & Structured Conventional Commit Generator**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Node.js Version](https://img.shields.io/badge/node-%3E%3D16-brightgreen)](https://nodejs.org)
+Built for high-performance engineering teams working across monorepos, web frameworks, mobile applications (iOS / Android / Flutter), and native backends.
 
 ---
 
-## Why Git Guard?
+## 🌟 Why Git Guard?
 
-Repositories slow down and machines freeze because of three common problems:
-1. **Accidental Giant Commits**: A developer stages an `.apk`, a 30MB log dump, or a bundle cache pack file. Once in Git history, it stays forever and inflates every clone/fetch.
-2. **Hidden Cache & Media Accumulation**: Modern web and mobile frameworks produce gigabytes of ephemeral build caches (`.next/`, `.turbo/`, `DerivedData/`, `.build/`, `android/.gradle/`) and AI inspection tools leave behind hundreds of megabytes of video recordings and screenshots.
-3. **Vague, Unhelpful Commits**: Commit messages like `"fix"` or `"updates"` don't convey what changed or why.
-
-**Git Guard solves all three automatically across any project and any framework.**
-
----
-
-## ✨ Features
-
-- 🛑 **10MB Commit Size Guard**: Fails fast in `< 0.05s` if any staged file exceeds 10MB (configurable). Zero data loss: files remain safely on your disk.
-- 🧹 **Universal Multi-Framework Cache Cleaner**:
-  - **Web**: Next.js, Nuxt, SvelteKit, Astro, Vite, Remix, Turbo, Parcel, Webpack.
-  - **Mobile**: React Native, Expo, Flutter, iOS (Pods, build, DerivedData), Android (build, gradle, APKs).
-  - **Compiled Languages**: Swift Package Manager (`.build/`), Rust (`target/`), Go (`bin/`), Java/Kotlin (`build/`, `.gradle/`).
-  - **Python**: `__pycache__`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`.
-  - **AI & Testing Media**: Antigravity/Gemini browser subagent WebP recordings (`~/.gemini/antigravity-ide/brain/*/.tempmediaStorage`), Playwright & Cypress test videos and screenshots.
-- 📝 **Structured Conventional Commit Generator**: Auto-inspects staged files, calculates line additions and deletions (+/–), intelligently groups files by domain, and builds a comprehensive commit message.
-- ⚡ **Git Native Performance Tuning**: Automatically enables macOS `core.fsmonitor`, `core.untrackedCache`, and `core.preloadindex`.
+1. **🛡️ 10MB Pre-Commit Size Guard**: Automatically blocks large binaries, video dumps, and unintended files from corrupting your Git history, while leaving them safe on your local disk.
+2. **🧹 Monorepo `node_modules` Deduplicator**: In monorepos (Turborepo, Nx, npm/yarn/pnpm workspaces), nested child `node_modules` waste gigabytes of disk and cause "Invalid Hook Call" / duplicate library errors. Git Guard hunts down and eliminates duplicate nested modules while keeping root dependencies intact.
+3. **✨ Structured Conventional Commits**: Automatically parses staged files across 9 framework domains (Web, Mobile, Backend, Schemas, etc.), computes diff stats (`+lines, -lines`), and creates clean, standardized conventional commits.
+4. **🧼 Universal Cache & Recording Cleaner**: Cleans ephemeral Gemini AI browser recordings, screenshots, and build caches across Next.js, Vite, Turbo, Swift SPM, Android Gradle, Xcode, Flutter, Rust, and Python.
+5. **⚡ Instant Git Acceleration**: Automatically configures `core.fsmonitor`, `core.untrackedCache`, and `core.preloadindex` for near-instant `git status` on massive repositories.
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Zero-Install via npx (Any Project)
-
-In any existing repository, run:
+Run instantly in any repository without installation:
 
 ```bash
-npx git-guard init
+# Generate a structured commit with safety checks
+npx @thashiznitt/git-guard commit
+
+# Deduplicate nested node_modules in monorepos
+npx @thashiznitt/git-guard dedupe
+
+# Clean temporary AI recordings and build caches
+npx @thashiznitt/git-guard clean --builds
 ```
 
-This will:
-- Install the **10MB Size Guard** into `.husky/pre-commit` or `.git/hooks/pre-commit`.
-- Enable Git native file-system monitoring (`fsmonitor`) for instant `git status`.
-- Add `commit` and `clean:recordings` scripts to your `package.json`.
-
----
-
-### 2. Auto-Install via npm (Reusable in Team Projects)
-
-Add `git-guard` to `devDependencies`:
+Or install permanently into your project:
 
 ```bash
-npm install -D git-guard
+npm install --save-dev @thashiznitt/git-guard
 ```
 
-During `npm install`, the **postinstall** hook automatically configures your repository.
+During installation, Git Guard automatically configures:
+- Pre-commit hook in `.husky` or `.git/hooks`
+- `install-strategy=hoisted` in `.npmrc` to prevent nested module duplication
+- `npm run commit`, `npm run dedupe:modules`, and `npm run clean:recordings` scripts in `package.json`
 
 ---
 
-## 🛠️ Commands & Usage
+## 🛠️ CLI Commands
 
-### 1. Human-Readable Descriptive Commits
-Stage your files and run:
+### 1. `git-guard dedupe`
+Scans the entire repository tree for nested `node_modules` folders (e.g. `apps/web/node_modules`, `packages/ui/node_modules`) and safely wipes them, reporting the exact disk space recovered.
 ```bash
-# Interactive mode (prompts for subject and description):
-npm run commit
-
-# Or with arguments:
-npm run commit -- -m "feat(auth): add OAuth2 provider" -d "Integrated Google OAuth and user session handler"
+git-guard dedupe
 ```
 
-**Example output generated in Git history:**
-```text
-feat(auth): add OAuth2 provider
-
-Integrated Google OAuth and user session handler
-
-Files:
-Backend & APIs:
-  - src/auth/oauth.service.ts (+42, -5)
-  - src/auth/oauth.controller.ts (+18, -2)
-
-Web & Frontend:
-  - src/components/LoginButton.tsx (+15, -1)
-
-Safety Verification:
-- Size Guard: PASSED (all staged files < 10MB)
-- Build Hygiene: Clean
-```
-
----
-
-### 2. Clean Ephemeral AI Media & Build Caches
-
+### 2. `git-guard commit`
+Interactive or automated conventional commit pipeline:
 ```bash
-# Clean temporary AI browser recordings & scratch screenshots:
-npx git-guard clean
+# Interactive mode (prompts for subject and description)
+git-guard commit
 
-# Deep clean ALL framework build caches (Next, Vite, Swift, Android, Python, etc.):
-npx git-guard clean --builds
+# One-liner mode
+git-guard commit -m "feat(auth): add biometric face id verification" -d "Integrates local authentication provider and updates wallet token handling."
 ```
 
----
-
-### 3. Check Staged Files (Pre-Commit / CI)
-
+### 3. `git-guard clean`
+Cleans browser session recordings, temporary screenshots, and test logs.
 ```bash
-# Verify no files exceed 10MB:
-npx git-guard check
+# Basic hygiene (recordings & screenshots)
+git-guard clean
 
-# Custom size limit (e.g. 15MB):
-npx git-guard check --max-size 15
+# Full build cache purge (Next, Vite, Swift, Android, Python, etc.)
+git-guard clean --builds
+```
+
+### 4. `git-guard check`
+Validates that staged files do not exceed the 10MB limit. Perfect for pre-commit hooks and CI pipelines.
+```bash
+git-guard check
+git-guard check --max-size 15 # Custom 15MB limit
 ```
 
 ---
 
-## 📦 Supported Frameworks & Builds
+## 📱 Framework Support
 
-| Ecosystem | Cleaned & Supported Caches | File Categorization |
-| :--- | :--- | :--- |
-| **Next.js / React / Vite** | `.next`, `.vite`, `dist`, `build`, `.turbo` | Frontend & Web |
-| **Nuxt / Vue** | `.nuxt`, `.output`, `dist` | Frontend & Web |
-| **Svelte / SvelteKit** | `.svelte-kit`, `build` | Frontend & Web |
-| **Astro** | `.astro`, `dist` | Frontend & Web |
-| **React Native / Expo** | `.expo`, `android/build`, `ios/build` | Mobile |
-| **Flutter** | `.dart_tool`, `build` | Mobile |
-| **Swift / iOS** | `.build`, `.swiftpm`, `Pods`, `DerivedData` | Mobile / Native |
-| **Android / Kotlin / Java** | `app/build`, `.gradle`, `target` | Mobile / Backend |
-| **Node / NestJS / Express** | `dist`, `.cache`, `*.tsbuildinfo` | Backend & APIs |
-| **Python / FastAPI / Django** | `__pycache__`, `.pytest_cache`, `.mypy_cache` | Backend & APIs |
-| **Rust / Cargo** | `target` | Backend & Native |
-| **AI Subagents / Browser Tests** | Gemini recordings, Playwright, Cypress videos | Test Media |
-
----
-
-## 🔒 Security & Privacy
-
-* **Zero telemetry, zero external network requests.**
-* Git Guard runs **100% locally** on your machine.
-* Does not collect, upload, or transmit any code, filenames, or metrics.
+- **Web**: Next.js, Nuxt, SvelteKit, Astro, Vite, Turbo, Parcel
+- **Mobile**: React Native, Expo, iOS (Swift SPM, CocoaPods, Xcode DerivedData), Android (Gradle, Kotlin)
+- **Backend & Systems**: Node.js, Go, Rust (`target`), Python (`__pycache__`, `.pytest_cache`), Java/Kotlin
+- **Testing**: Playwright, Cypress, Jest, Vitest
 
 ---
 
